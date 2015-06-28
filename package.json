@@ -1,0 +1,36 @@
+{
+  "name": "usbhid",
+  "version": "0.0.0",
+  "description": "USB HID interface for CS Devices",
+  "main": "index.js",
+  "directories": {
+    "example": "examples",
+    "test": "test"
+  },
+  "dependencies": {
+    "chai": "^3.0.0",
+    "chalk": "^1.0.0",
+    "lodash": "^3.9.3",
+    "node-hid": "^0.4.0",
+    "repl": "^0.1.3"
+  },
+  "devDependencies": {
+    "mocha": "^2.2.5"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/bglase/usbhid.git"
+  },
+  "keywords": [
+    "usb"
+  ],
+  "author": "Bill Glase <bglase@controls.com> (http://wwww.controls.com/)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bglase/usbhid/issues"
+  },
+  "homepage": "https://github.com/bglase/usbhid"
+}
