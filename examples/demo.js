@@ -1,5 +1,5 @@
 
-var AcnCoordinator = require('./cs-acn-coord');
+var AcnCoordinator = require('../cs-acn-coord');
 var coord = new AcnCoordinator();
 
 console.log(coord.serialNumber + ' online');

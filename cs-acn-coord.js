@@ -11,6 +11,26 @@ var HID = require('node-hid'),
   //joysticks = require('./joysticks.json');
 
 
+// These are the OUT commands supported by the ACN application
+var ACN_GET_NETWORK = 0x40;
+var ACN_GET_CONNECTIONS = 0x41;
+var ACN_GET_ROUTING = 0x42;
+
+var COMMAND_TOGGLE_LED = 0x80;
+var COMMAND_GET_BUTTON_STATUS = 0x81,
+var COMMAND_READ_POTENTIOMETER = 0x37
+
+
+var ACN_SCAN_CHANNELS = 0xA0;
+var ACN_RESTART_NETWORK = 0xA1;
+var ACN_START_PAIRING = 0xA2;
+var ACN_SET_OUTPUTS = 0xA3;
+var ACN_READ_INPUTS = 0xA4
+
+var ACN_SET_FACTORY_CONFIG = 0xFE;
+
+
+
 var dead = 6000;
 
 // These identify the type of device we will connect to
@@ -277,57 +297,77 @@ AcnCoordinator.configure = function () {
 
 util.inherits(AcnCoordinator, events.EventEmitter);
 
+/**
+ * Scan the bus for a matching devices and connect
+ *
+ * If a serial number is known, we look for that specific device
+ * Otherwise we attempt to connect to the first available device
+ * of the correct type.
+ */
 AcnCoordinator.prototype.loadController = function () {
 
-  HID.devices().forEach((function (d) {
+  // Iterate through all matching devices
+  HID.devices( theVendorId, theProductId).forEach((function (d) {
   
     
-  try {
-    if( this.serialNumber )
-    {  
-      // If the serial number is set, look for device with that serial number.
-      var deviceSerialNumber = (typeof d === 'object' && d.serialNumber) || '';
-    
-      if (deviceSerialNumber.indexOf(this.serialNumber) !== -1) {
-        console.log(chalk.green('notice: '), 'serial number found.');     
-        this.hid = new HID.HID(d.path);
-        console.log(chalk.green('notice: '), 'Coordinator connected (serial number: ' 
-        + d.serialNumber + ', path: ' + d.path + ')');
-        this.emit('connected');
-        location = this.hid;
-      }
-    } else {
-      // The serial number is not set, grab the first device.
-      var productId = (typeof d === 'object' && d.productId) || '';
-      var vendorId = (typeof d === 'object' && d.vendorId) || '';
+    try {
+      if( this.serialNumber )
+      {  
+        // If the serial number is set, look for device with that serial number.
+        var deviceSerialNumber = (typeof d === 'object' && d.serialNumber) || '';
       
-      if (productId == theProductId && vendorId == theVendorId) {
+        if (deviceSerialNumber.indexOf(this.serialNumber) !== -1) {
+  
+          console.log(chalk.green('notice: '), 'serial number found.');     
+  
+          this.hid = new HID.HID(d.path);
+  
+          console.log(chalk.green('notice: '), 'Coordinator connected (serial number: ' 
+          + d.serialNumber + ', path: ' + d.path + ')');
+  
+          this.emit('connected');
+          location = this.hid;
+        }
+      } else {
 
-        //this.hid = new HID.HID(d.path);        
+        // The serial number is not set, grab the first device.
+        //var productId = (typeof d === 'object' && d.productId) || '';
+        //var vendorId = (typeof d === 'object' && d.vendorId) || '';
+      
+        //if (productId == theProductId && vendorId == theVendorId) {
+
         this.hid = new HID.HID( d.path );        
+        
         console.log(chalk.green('notice: '), 'Coordinator connected (serial number: ' 
-        + d.serialNumber + ', path: ' + d.path + ')');
+          + d.serialNumber + ', path: ' + d.path + ')');
+        
         this.serialNumber = d.serialNumber;
+        
         this.emit('connected');
+        
         location = this.hid;
       }
-    }
-  } catch (ex) {
-    console.log(chalk.green('notice: '), 'Coordinator already in use (serial number: ' 
+    } catch (ex) {
+    
+      console.log(chalk.green('notice: '), 'Coordinator already in use (serial number: ' 
         + d.serialNumber + ', path: ' + d.path + ')' );
-  }
+    }
     
   }).bind(this));
 
+  // If we did not manage to connect, set a timer and try again
   if (this.hid === false && !this._controllerLoadingInterval) {
+
     this._controllerLoadingInterval = setInterval(function () {
       this.loadController();
+
     }.bind(this), 2000);
   }
 
   try {
     this.hid.read(this.interpretData.bind(this));
   } catch (ex) {
+
     console.log(chalk.red('error: '), 'Coordinator could not be found.');
     this.emit('not-found');
   }
@@ -435,15 +475,29 @@ Pattern  Description
  */
 // input one of the patterns abov
 AcnCoordinator.prototype.toggleLed = function (flag) {
-  this.sendCommand([0x80], 'can\'t toggle LED ');
+  this.sendCommand([COMMAND_TOGGLE_LED], 'can\'t toggle LED ');
 };
 
 AcnCoordinator.prototype.button = function () {
-  this.sendCommand([0x81], 'can\'t read buttons');
+  this.sendCommand([COMMAND_GET_BUTTON_STATUS], 'can\'t read buttons');
 };
 
 AcnCoordinator.prototype.pot = function () {
-  this.sendCommand([0x81], 'can\'t read pot');
+  this.sendCommand([COMMAND_READ_POTENTIOMETER], 'can\'t read pot');
+};
+
+
+
+AcnCoordinator.prototype.getNetwork = function ( callback ) {
+  this.sendCommand([ACN_GET_NETWORK], 'can\'t get Network ');
+};
+
+AcnCoordinator.prototype.getConnections = function ( callback ) {
+  this.sendCommand([ACN_GET_CONNECTIONS], 'can\'t get Connections ');
+};
+
+AcnCoordinator.prototype.getRoutingTable = function ( callback ) {
+  this.sendCommand([ACN_GET_ROUTING], 'can\'t get Routing table ');
 };
 
 
